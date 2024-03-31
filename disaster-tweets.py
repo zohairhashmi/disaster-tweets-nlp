@@ -61,10 +61,6 @@ def reset_states(text):
                 new_word = text[i] + ' ' + text[i + 1]
                 if new_word in states.keys():
                     return states[new_word]
-                else:
-                    continue
-        else:
-            continue
     return text
 
 
@@ -74,30 +70,34 @@ data = pd.read_csv('data/train.csv')
 
 print("Number of missing values in keyword column: {} \n".format(data['keyword'].isnull().sum()))
 print("Number of missing values in location column: {} \n".format(data['location'].isnull().sum()))
-# total records
 print("Total records: {} \n".format(len(data)))
 
 # Clean the text column
-for t in data['text']:
-    words = t.split()
+print('cleaning text column...')
+for i in range(len(data['text'])):
+    words = data['text'][i].split()
     words = lowercase(words)
     words = remove_attherate_word(words)
     words = remove_http_link(words)
     words = remove_non_alphanumeric(words)
     words = remove_stop_words(words)
     words = lemmatisation(words)
-    data.loc[data['text'] == t, 'text'] = ' '.join(words)
+    data.loc[i, 'text'] = ' '.join(words)
 
 # Clean the keyword column
-for t in data['keyword']:
-    if type(t) == str and '%20' in t:
-        data.loc[data['keyword'] == t, 'keyword'] = keyword_replace(t, '%20', ' ')
-    words = lowercase(words)
+print('cleaning keyword column...')
+for i in range(len(data['keyword'])):
+    if type(data['keyword'][i]) == str and '%20' in data['keyword'][i]:
+        data.loc[i, 'keyword'] = keyword_replace(data['keyword'][i], '%20', ' ')
+    elif type(data['keyword'][i]) == float:
+        data.loc[i, 'keyword'] = ''
+    words = lowercase(data['keyword'][i])
     words = remove_non_alphanumeric(words)
-    data.loc[data['keyword'] == t, 'keyword'] = ' '.join(words)
+    data.loc[i, 'keyword'] = ''.join(words)
 data['keyword'].fillna('', inplace=True)
 
 # Update missing locations
+print('updating missing locations...')
 missing_location = data[data['location'].isnull()]
 for t in missing_location['text']:
     entity = update_location(t)
@@ -105,15 +105,16 @@ for t in missing_location['text']:
     data.loc[data['text'] == t, 'location'] = entity
 
 # Clean the location column
+print('cleaning location column...')
 data['location'].fillna('', inplace=True)
-for t in data['location']:
-    words = t.split()
+for i in range(len(data['location'])):
+    words = data['location'][i].split()
     words = lowercase(words)
     words = remove_non_alphabetic(words)
     words = remove_stop_words(words)
     words = remove_http_link(words)
     words = reset_states(words)
-    data.loc[data['location'] == t, 'location'] = ' '.join(words)
+    data.loc[i, 'location'] = ''.join(words)
 
 print(data.head())
 
@@ -122,7 +123,6 @@ data.to_csv('data/train_cleaned.csv', index=False)
 # End the timer
 end_time = time.time()
 
-# Print time in minutes
 print("Time taken: {} minutes".format((end_time - start_time) / 60))
 
 exit(0)
