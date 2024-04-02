@@ -116,7 +116,7 @@ for i in range(len(data['location'])):
     words = reset_states(words)
     data.loc[i, 'location'] = ''.join(words)
 
-print(data.head())
+print(data.head(10))
 
 data.to_csv('data/train_cleaned.csv', index=False)
 
