@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import numpy as np
 import re
@@ -35,7 +36,7 @@ def keyword_replace(text, toreplace, replacewith):
     return text.replace(toreplace, replacewith)
 
 def remove_http_link(words):
-    url_patterns = r'\b\w*(http|https|www|\.com)\w*\b'
+    url_patterns = r'\b\w*(http|https|www|\.com|t.co)\w*\b'
     # matches = re.findall(url_patterns, ' '.join(words))
     text = re.sub(url_patterns, '', ' '.join(words))
     return text.split()
