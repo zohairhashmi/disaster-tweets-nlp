@@ -17,8 +17,8 @@ stop_words = set(stopwords.words('english')) # Create a list of stop words
 # Start the timer
 start_time = time.time()
 
-def remove_attherate_word(words):
-    return [word for word in words if not word.startswith('@')]
+def remove_attherate_word(words): # Filter words that don't contain "@" using list comprehension
+    return [word for word in words if '@' not in word]
 
 def remove_stop_words(words): # Remove the stop words from the text
     return [word for word in words if word not in stop_words]
@@ -35,15 +35,11 @@ def lowercase(words): # Convert all the words to lowercase
 def keyword_replace(text, toreplace, replacewith):
     return text.replace(toreplace, replacewith)
 
-def remove_http_link(words):
-    url_patterns = r'\b\w*(http|https|www|\.com|t.co)\w*\b'
-    # matches = re.findall(url_patterns, ' '.join(words))
-    text = re.sub(url_patterns, '', ' '.join(words))
-    return text.split()
+def remove_url(words): # Filter words without any URL substring using list comprehension with "any" check
+  return [word for word in words if all(x not in word for x in ("http", "www", ".com", "t.co"))]
 
-def lemmatisation(words):
-    doc = nlp(' '.join(words))
-    return [token.lemma_ for token in doc]
+def lemmatisation(words): # Lemmatize the words
+    return [token.lemma_ for token in nlp(' '.join(words))]
 
 def update_location(text):
     doc = nlp(text)
@@ -79,7 +75,7 @@ for i in range(len(data['text'])):
     words = data['text'][i].split()
     words = lowercase(words)
     words = remove_attherate_word(words)
-    words = remove_http_link(words)
+    words = remove_url(words)
     words = remove_non_alphanumeric(words)
     words = remove_stop_words(words)
     words = lemmatisation(words)
@@ -113,7 +109,7 @@ for i in range(len(data['location'])):
     words = lowercase(words)
     words = remove_non_alphabetic(words)
     words = remove_stop_words(words)
-    words = remove_http_link(words)
+    words = remove_url(words)
     words = reset_states(words)
     data.loc[i, 'location'] = ''.join(words)
 
