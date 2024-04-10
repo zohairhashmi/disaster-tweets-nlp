@@ -1,3 +1,6 @@
+##### NOT IMPORTANT FOR THE PROJECT #####
+
+
 # Create word and sentence embeddings using BERT and save them to a file
 # Usage: python embeddings.py <input_file> <output_file>
 # Example: python embeddings.py data.csv embeddings.pkl
