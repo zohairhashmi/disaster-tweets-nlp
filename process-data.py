@@ -62,8 +62,7 @@ def reset_states(text):
 
 
 # Read the data from the csv file
-data = pd.read_csv('data/train.csv')
-# test = pd.read_csv('data/test.csv')
+data = pd.read_csv(sys.argv[1])
 
 print("Number of missing values in keyword column: {} \n".format(data['keyword'].isnull().sum()))
 print("Number of missing values in location column: {} \n".format(data['location'].isnull().sum()))
@@ -115,7 +114,7 @@ for i in range(len(data['location'])):
 
 print(data.head(10))
 
-data.to_csv('data/train_cleaned.csv', index=False)
+data.to_csv(sys.argv[2], index=False)
 
 # End the timer
 end_time = time.time()
