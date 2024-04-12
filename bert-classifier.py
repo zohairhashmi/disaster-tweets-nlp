@@ -1,3 +1,6 @@
+# The following code is executed in the terminal to train the BERT model for text classification
+# Usage: python3 bert-classifier.py <path-to-load-train_cleaned.csv> <path-to-save-model.pth>
+
 import os
 import sys
 import torch
@@ -31,12 +34,14 @@ class BERTClassifier(nn.Module):
         super(BERTClassifier, self).__init__()
         self.bert = BertModel.from_pretrained(bert_model_name) # BERT model - pre-trained model from Hugging Face Transformers
         self.dropout = nn.Dropout(0.2) # dropout layer - randomly zeroes some of the elements of the input tensor with probability p
+        # self.norm = nn.LayerNorm(self.bert.config.hidden_size)
         self.fc1 = nn.Linear(self.bert.config.hidden_size, 384) # fully connected layer - applies a linear transformation to the incoming data
         self.fc2 = nn.Linear(384, num_classes) # fully connected layer - applies a linear transformation to the incoming data
 
     def forward(self, input_ids, attention_mask):
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask) # BERT model forward pass - returns a tuple of last hidden states, pooler output, hidden states, and attentions
         pooled_output = outputs.pooler_output # pooled output - output of the model's classifier (hidden state of the first token of the sequence)
+        # pooled_output = self.norm(pooled_output) # layer normalization - normalizes the activations of the previous layer for each data point
         x = self.dropout(pooled_output) # dropout layer forward pass - randomly zeroes some of the elements of the input tensor with probability p
         x = nn.ReLU()(self.fc1(x))
         logits = self.fc2(x)
@@ -85,7 +90,7 @@ def main():
     # Set up parameters
     bert_model_name = 'bert-base-uncased'
     num_classes = 2
-    max_length = 30
+    max_length = 28
     batch_size = 12
     num_epochs = 10
     learning_rate = 1e-5
@@ -109,7 +114,7 @@ def main():
     print(f"Device: {device}")
 
     model = BERTClassifier(bert_model_name, num_classes).to(device)
-    optimizer = AdamW(model.parameters(), lr=learning_rate)
+    optimizer = AdamW(model.parameters(), lr=learning_rate, no_deprecation_warning=True, weight_decay=0.01)
     total_steps = len(train_dataloader) * num_epochs
     scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0, num_training_steps=total_steps)
 
@@ -120,7 +125,7 @@ def main():
         print(report)
         # time.sleep(20)
 
-    torch.save(model.state_dict(), "bert_classifier.pth")
+    torch.save(model.state_dict(), sys.argv[2])
 
 if __name__ == "__main__":
     main()

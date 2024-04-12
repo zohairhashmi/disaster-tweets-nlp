@@ -1,5 +1,6 @@
-# Test model on test dataset
-# Usage: python3 test.py test_cleaned.csv model.pth output.csv
+# The following code is executed in the terminal to evaluate the BERT model for text classification
+# Usage: python3 model-evaluation.py <path-to-load-model.pth> <path-to-load-test_cleaned.csv> <path-to-save-results.csv>
+
 import sys
 import torch
 import tqdm

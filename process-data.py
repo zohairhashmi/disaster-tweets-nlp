@@ -1,3 +1,6 @@
+# The following code is executed in the terminal to process the data for training the BERT model
+# Usage: python3 process-data.py <path-to-load-dataset.csv> <path-to-save-cleaned.csv>
+
 import sys
 import pandas as pd
 import numpy as np
