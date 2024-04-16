@@ -3,11 +3,10 @@
 
 import sys
 import pandas as pd
-import numpy as np
 import re
 import time
-
 import us_state_abbrev as abr
+
 states = abr.us_state_to_abbrev
 states = {k.lower(): v.lower() for k, v in states.items()}
 
@@ -63,6 +62,11 @@ def reset_states(text):
                     return states[new_word]
     return text
 
+def merge_keyword_text(df):
+    keyword = df['keyword'].to_list()
+    texts = df['text'].to_list()
+    return [keyword[i] + " " + texts[i] for i in range(len(texts))]
+
 
 # Read the data from the csv file
 data = pd.read_csv(sys.argv[1])
@@ -79,8 +83,9 @@ for i in range(len(data['text'])):
     words = remove_attherate_word(words)
     words = remove_url(words)
     words = remove_non_alphanumeric(words)
-    words = remove_stop_words(words)
+    words = lowercase(words)
     words = lemmatisation(words)
+    words = remove_stop_words(words)
     data.loc[i, 'text'] = ' '.join(words)
 
 # Clean the keyword column
@@ -95,25 +100,29 @@ for i in range(len(data['keyword'])):
     data.loc[i, 'keyword'] = ''.join(words)
 data['keyword'].fillna('', inplace=True)
 
-# Update missing locations
-print('updating missing locations...')
-missing_location = data[data['location'].isnull()]
-for t in missing_location['text']:
-    entity = update_location(t)
-    entity = lowercase([entity])[0] if entity else ''
-    data.loc[data['text'] == t, 'location'] = entity
+# Merge keyword and text columns
+print('merging keyword and text columns...')
+data['text'] = merge_keyword_text(data)
 
-# Clean the location column
-print('cleaning location column...')
-data['location'].fillna('', inplace=True)
-for i in range(len(data['location'])):
-    words = data['location'][i].split()
-    words = lowercase(words)
-    words = remove_non_alphabetic(words)
-    words = remove_stop_words(words)
-    words = remove_url(words)
-    words = reset_states(words)
-    data.loc[i, 'location'] = ''.join(words)
+# # Update missing locations
+# print('updating missing locations...')
+# missing_location = data[data['location'].isnull()]
+# for t in missing_location['text']:
+#     entity = update_location(t)
+#     entity = lowercase([entity])[0] if entity else ''
+#     data.loc[data['text'] == t, 'location'] = entity
+
+# # Clean the location column
+# print('cleaning location column...')
+# data['location'].fillna('', inplace=True)
+# for i in range(len(data['location'])):
+#     words = data['location'][i].split()
+#     words = lowercase(words)
+#     words = remove_non_alphabetic(words)
+#     words = remove_stop_words(words)
+#     words = remove_url(words)
+#     words = reset_states(words)
+#     data.loc[i, 'location'] = ''.join(words)
 
 print(data.head(10))
 

@@ -1,17 +1,16 @@
 # The following code is executed in the terminal to train the BERT model for text classification
-# Usage: python3 bert-classifier.py <path-to-load-train_cleaned.csv> <path-to-save-model.pth>
+# Usage: python3 model-training.py <path-to-load-train_cleaned.csv> <path-to-save-model.pth>
 
-import os
 import sys
 import torch
 import tqdm
-import time
 from torch import nn
 from torch.utils.data import DataLoader, Dataset
-from transformers import BertTokenizer, BertModel, AdamW, get_linear_schedule_with_warmup
+from transformers import BertTokenizer, AdamW, get_linear_schedule_with_warmup
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
+from BERTClassifier import BERTClassifier # Import the BERTClassifier class from BERTClassifier.py
 
 class TextClassificationDataset(Dataset):
     def __init__(self, texts, labels, tokenizer, max_length):
@@ -28,24 +27,6 @@ class TextClassificationDataset(Dataset):
         label = self.labels[idx]
         encoding = self.tokenizer(text, return_tensors='pt', max_length=self.max_length, padding='max_length', truncation=True)
         return {'input_ids': encoding['input_ids'].flatten(), 'attention_mask': encoding['attention_mask'].flatten(), 'label': torch.tensor(label)}
-
-class BERTClassifier(nn.Module):
-    def __init__(self, bert_model_name, num_classes):
-        super(BERTClassifier, self).__init__()
-        self.bert = BertModel.from_pretrained(bert_model_name) # BERT model - pre-trained model from Hugging Face Transformers
-        self.dropout = nn.Dropout(0.2) # dropout layer - randomly zeroes some of the elements of the input tensor with probability p
-        # self.norm = nn.LayerNorm(self.bert.config.hidden_size)
-        self.fc1 = nn.Linear(self.bert.config.hidden_size, 384) # fully connected layer - applies a linear transformation to the incoming data
-        self.fc2 = nn.Linear(384, num_classes) # fully connected layer - applies a linear transformation to the incoming data
-
-    def forward(self, input_ids, attention_mask):
-        outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask) # BERT model forward pass - returns a tuple of last hidden states, pooler output, hidden states, and attentions
-        pooled_output = outputs.pooler_output # pooled output - output of the model's classifier (hidden state of the first token of the sequence)
-        # pooled_output = self.norm(pooled_output) # layer normalization - normalizes the activations of the previous layer for each data point
-        x = self.dropout(pooled_output) # dropout layer forward pass - randomly zeroes some of the elements of the input tensor with probability p
-        x = nn.ReLU()(self.fc1(x))
-        logits = self.fc2(x)
-        return logits
 
 def train(model, data_loader, optimizer, scheduler, device):
     model.train()
@@ -90,13 +71,24 @@ def main():
     # Set up parameters
     bert_model_name = 'bert-base-uncased'
     num_classes = 2
-    max_length = 28
+    max_length = 30
     batch_size = 12
     num_epochs = 10
     learning_rate = 1e-5
 
     # load data
     df = pd.read_csv(sys.argv[1])
+    sampleSize = min(df[df['target'] == 0].shape[0], df[df['target'] == 1].shape[0])
+    # randomly sample 3000 rows from each class
+    df_0 = df[df['target'] == 0].sample(n=sampleSize, random_state=42)
+    df_1 = df[df['target'] == 1].sample(n=sampleSize, random_state=42)
+
+    # concatenate the dataframes
+    df_balanced = pd.concat([df_0, df_1])
+
+    # shuffle the data
+    df = df_balanced.sample(frac=1, random_state=42)
+    
     # df = pd.read_csv('data/train_cleaned.csv')
     texts = df['text'].to_list()
     labels = df['target'].to_list()
